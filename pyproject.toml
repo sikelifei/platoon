@@ -1,0 +1,85 @@
+[project]
+name = "platoon"
+version = "0.1.0"
+description = "Build and train systems of agents."
+authors = [
+    {name = "Apurva Gandhi", email = "apurvag@cs.cmu.edu"}
+]
+readme = "README.md"
+requires-python = "~=3.12.0"
+dependencies = [
+    "ai-rubric>=0.2.4",
+    "datasets",
+    "ipython>=9.4.0",
+    "litellm",
+    "pandas>=2.3.3",
+    "pyarrow>=22.0.0",
+    "rich>=13.9.4",
+    "textual>=5.3.0",
+    "notebook>=7.4.4",
+    "tenacity",
+    "tensordict",
+]
+
+[project.optional-dependencies]
+tinker = [
+    "tinker==0.16.1",
+    "tinker-cookbook @ git+https://github.com/thinking-machines-lab/tinker-cookbook.git@0be951bd38eb83c4363c1d11caddf4388bf05262",
+]
+# NOTE: areal backend requires uv for installation (not available on PyPI)
+# Install with: uv pip install -e ".[areal]"
+areal = [
+    "areal[cuda]",
+]
+# Logging integrations (optional)
+wandb = [
+    "wandb>=0.19.0",
+]
+
+# uv-specific configuration
+# These settings are ignored by pip and only apply when using uv
+[tool.uv]
+# tinker and areal backends are mutually exclusive
+conflicts = [
+    [
+        { extra = "tinker" },
+        { extra = "areal" },
+    ],
+]
+override-dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "openai==1.99.6",
+    "xgrammar==0.1.24",
+    "outlines-core==0.1.26",
+    "pyarrow==20.0.0",
+    "datasets==4.3.0",
+    "networkx==3.3.0", # This can be removed if ai-rubric pins 3.3.0 or areal relaxes the pin.
+]
+no-build-isolation-package = ['flash-attn']
+
+[tool.uv.sources]
+areal = { git = "https://github.com/areal-project/AReaL.git", rev = "35b57e2d2743f7158894239acda8b71f7226b955" }
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["platoon"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.11.9",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

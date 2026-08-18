@@ -1,0 +1,8 @@
+# Endpoint and model are replaced with the active AReaL rollout session at runtime.
+model:
+  type: api
+  api:
+    api_key: "None"
+    base_url: http://127.0.0.1:1/v1
+    model: placeholder
+    sampling_args: {}
