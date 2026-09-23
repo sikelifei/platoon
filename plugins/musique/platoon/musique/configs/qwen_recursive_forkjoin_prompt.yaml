@@ -1,0 +1,34 @@
+inference:
+  model_name: openai/Qwen3-4B-Instruct-2507
+  model_endpoint: http://192.168.1.134:8010/v1
+  model_api_key: EMPTY
+  output_dir: /data2/zhangwenjian/agent/musique_results/benchmark20_4hopheavy/qwen/recursive_forkjoin_prompt_v3
+  resume: false
+  workflow:
+    num_rollouts_per_task: 1
+    num_concurrent_workers: 4
+    success_threshold: 1.0
+    fail_fast: false
+    use_subprocesses: false
+    subprocess_max_workers: null
+    rollout_config:
+      max_steps: 12
+      output_dir: /data2/zhangwenjian/agent/musique_results/benchmark20_4hopheavy/qwen/recursive_forkjoin_prompt_v3/rollouts
+      verbose: false
+      timeout: 1200
+      step_timeout: 300
+      inference_params:
+        temperature: 0.0
+        top_p: 1.0
+        max_completion_tokens: 1024
+dataset_variant: ans
+dataset_split: dev
+data_dir: /data2/zhangwenjian/agent/musique_data/stratified20_4hopheavy
+hf_dataset_name: voidful/MuSiQue
+prompt_path: prompts/musique.md
+num_tasks: 20
+use_recursive_agent: true
+task_id: null
+stage: full
+shuffle_tasks: false
+seed: 42

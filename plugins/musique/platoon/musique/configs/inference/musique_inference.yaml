@@ -1,0 +1,36 @@
+# MuSiQue inference config. Replace prompt_path with your own prompt later.
+inference:
+  model_name: openai/Qwen/Qwen3-4B-Instruct-2507
+  model_endpoint: http://127.0.0.1:30000/v1
+  model_api_key: null
+  output_dir: /data2/zhangwenjian/agent/musique_results
+  resume: true
+  workflow:
+    num_rollouts_per_task: 1
+    num_concurrent_workers: 4
+    success_threshold: 1.0
+    fail_fast: false
+    use_subprocesses: false
+    subprocess_max_workers: null
+    rollout_config:
+      max_steps: 50
+      output_dir: /data2/zhangwenjian/agent/musique_results/rollouts
+      verbose: true
+      timeout: 3600
+      step_timeout: 3600
+      inference_params:
+        temperature: 0.7
+        top_p: 0.95
+        max_completion_tokens: 4096
+
+dataset_variant: ans
+dataset_split: dev
+data_dir: /data2/zhangwenjian/agent/musique_data
+hf_dataset_name: voidful/MuSiQue
+prompt_path: prompts/musique.md
+num_tasks: 10
+use_recursive_agent: true
+task_id: null
+stage: full
+shuffle_tasks: false
+seed: 42

@@ -1,0 +1,1 @@
+"""MuSiQue inference entry points."""
