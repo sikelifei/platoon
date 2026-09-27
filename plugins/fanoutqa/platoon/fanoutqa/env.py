@@ -96,12 +96,21 @@ class FanOutQASingleCodeExecutor(IPythonCodeExecutor):
 
     async def describe_action_space(self) -> str:
         return """Available Actions (Python functions):
-1. wiki_search(query: str, results: int = 10)
-   Search Wikipedia and return the official Evidence objects.
-2. wiki_content(evidence)
-   Pass a returned object directly, such as results[0]; do not reconstruct it.
-3. finish(message: str)
+
+1. def wiki_search(query: str, results: int = 10)
+   Search Wikipedia and return a list of official FanOutQA Evidence objects.
+   This function is synchronous; do not await it.
+
+2. def wiki_content(evidence) -> str
+   Retrieve page content for an Evidence object returned by wiki_search.
+   Pass the returned object directly; do not reconstruct it.
+   This function is synchronous; do not await it.
+   Use page content as evidence for factual claims. Search results are mainly
+   for locating the appropriate page.
+
+3. def finish(message: str) -> str
    Submit the final answer and end the task.
+   This function is synchronous.
 """
 
     async def reset(self) -> FanOutQASingleCodeExecutor:
@@ -146,15 +155,39 @@ class FanOutQARecursiveCodeExecutor(FanOutQASingleCodeExecutor):
 
     async def describe_action_space(self) -> str:
         return """Available Actions (Python functions):
+
 1. async def launch_subagent(goal: str) -> str
-   Delegate one focused subproblem. The child has the same tools and may recurse.
-   Await calls; use asyncio.gather(...) only for independent subproblems.
-2. wiki_search(query: str, results: int = 10)
-   Search Wikipedia and return the official Evidence objects.
-3. wiki_content(evidence)
-   Pass a returned object directly, such as results[0]; do not reconstruct it.
-4. finish(message: str)
+   Delegate one focused, self-contained subproblem to a child agent.
+   The child has the same Wikipedia tools and may recursively delegate.
+   The child does not see the parent's previous search history, so include all
+   entities and context required to solve the subproblem in `goal`.
+
+   Use:
+       result = await launch_subagent(goal)
+
+   Independent subproblems may run concurrently:
+       results = await asyncio.gather(
+           launch_subagent(goal_a),
+           launch_subagent(goal_b),
+       )
+
+   `asyncio` is already available.
+
+2. def wiki_search(query: str, results: int = 10)
+   Search Wikipedia and return a list of official FanOutQA Evidence objects.
+   This function is synchronous; do not await it.
+
+3. def wiki_content(evidence) -> str
+   Retrieve page content for an Evidence object returned by wiki_search.
+   Pass the returned object directly; do not reconstruct it.
+   This function is synchronous; do not await it.
+
+   Use page content as evidence for factual claims. Search results are mainly
+   for locating the appropriate page.
+
+4. def finish(message: str) -> str
    Submit the final answer and end the task.
+   This function is synchronous.
 """
 
     async def reset(self) -> FanOutQARecursiveCodeExecutor:

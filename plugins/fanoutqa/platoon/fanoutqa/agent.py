@@ -27,9 +27,11 @@ def _read_prompt(prompt_path: str | Path | None, recursive: bool) -> str:
         return prompt
     # Single-agent prompts keep the exact common paragraphs while dropping any
     # recursion instructions, including when configs pass the recursive file.
+    paragraphs = prompt.split("\n\n")
+    paragraphs[0] = paragraphs[0].replace(", and you can delegate subproblems to subagents", "")
     return "\n\n".join(
         paragraph
-        for paragraph in prompt.split("\n\n")
+        for paragraph in paragraphs
         if "launch_subagent" not in paragraph.lower() and "subagent" not in paragraph.lower()
     )
 

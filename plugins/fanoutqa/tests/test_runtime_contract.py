@@ -58,6 +58,23 @@ def test_single_and_recursive_action_spaces_and_retrieval_identity(monkeypatch):
     recursive_description = asyncio.run(recursive.describe_action_space())
     assert "launch_subagent" not in single_description
     assert "launch_subagent" in recursive_description
+    assert "async def" not in single_description
+    assert recursive_description.count("async def") == 1
+    assert "async def launch_subagent(goal: str) -> str" in recursive_description
+    assert "result = await launch_subagent(goal)" in recursive_description
+    assert "await asyncio.gather(" in recursive_description
+    assert "The child does not see the parent's previous search history" in recursive_description
+    assert "include all\n   entities and context required" in recursive_description
+    for description in (single_description, recursive_description):
+        assert "def wiki_search(query: str, results: int = 10)" in description
+        assert "This function is synchronous; do not await it." in description
+        assert "def wiki_content(evidence) -> str" in description
+        assert "Pass the returned object directly; do not reconstruct it." in description
+        assert "def finish(message: str) -> str" in description
+        assert "This function is synchronous." in description
+        assert "await wiki_search" not in description
+        assert "await wiki_content" not in description
+        assert "await finish" not in description
 
     evidence = object()
     results = [evidence]
@@ -132,20 +149,37 @@ def test_recursive_agent_and_root_child_grandchild_use_homogeneous_isolated_cont
 
             root_builder = FanOutQAPromptBuilder(recursive=True)
             single_builder = FanOutQAPromptBuilder(recursive=False)
-            assert "launch_subagent" in root_builder.system_prompt
-            assert "launch_subagent" not in single_builder.system_prompt
-            for builder in (root_builder, single_builder):
-                assert 'results = wiki_search("specific search terms")' in builder.system_prompt
-                assert "wiki_search(query)" not in builder.system_prompt
-                assert "page = wiki_content(results[0])" in builder.system_prompt
-                assert "Titles and snippets" in builder.system_prompt
-                assert "do not establish" in builder.system_prompt
-            common_paragraphs = [
-                paragraph
-                for paragraph in root_builder.system_prompt.split("\n\n")
-                if "launch_subagent" not in paragraph.lower() and "subagent" not in paragraph.lower()
+            recursive_prompt = root_builder.system_prompt
+            single_prompt = single_builder.system_prompt
+            headings = [
+                "RESEARCH STRATEGY:",
+                "DELEGATION STRATEGY:",
+                "ANSWER SUBMISSION:",
+                "OTHER TIPS:",
             ]
-            assert single_builder.system_prompt == "\n\n".join(common_paragraphs)
+            assert [recursive_prompt.index(heading) for heading in headings] == sorted(
+                recursive_prompt.index(heading) for heading in headings
+            )
+            assert "newly discovered entities or facts" in recursive_prompt
+            assert "multiple independent branches" in recursive_prompt
+            assert "Do not delegate the current task unchanged" in recursive_prompt
+            assert "launch_subagent" in recursive_prompt
+            assert "DELEGATION STRATEGY:" not in single_prompt
+            assert "launch_subagent" not in single_prompt
+            assert "specific search terms" not in recursive_prompt
+            assert "wiki_search(" not in recursive_prompt
+            assert "wiki_content(" not in recursive_prompt
+            assert "Use the available tools according to the Action Space." in recursive_prompt
+            assert "You are a deep research agent" in single_prompt
+            assert "Python plus Wikipedia search tools." in single_prompt
+            assert "you can delegate subproblems to subagents" not in single_prompt
+            common_paragraphs = []
+            for index, paragraph in enumerate(recursive_prompt.split("\n\n")):
+                if index == 0:
+                    paragraph = paragraph.replace(", and you can delegate subproblems to subagents", "")
+                if "launch_subagent" not in paragraph.lower() and "subagent" not in paragraph.lower():
+                    common_paragraphs.append(paragraph)
+            assert single_prompt == "\n\n".join(common_paragraphs)
 
             root_agent = FanOutQARecursiveAgent(
                 prompt_builder=root_builder,
