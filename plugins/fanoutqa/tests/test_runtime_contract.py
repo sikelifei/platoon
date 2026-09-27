@@ -160,26 +160,42 @@ def test_recursive_agent_and_root_child_grandchild_use_homogeneous_isolated_cont
             assert [recursive_prompt.index(heading) for heading in headings] == sorted(
                 recursive_prompt.index(heading) for heading in headings
             )
-            assert "newly discovered entities or facts" in recursive_prompt
+            assert "newly discovered entities and facts" in recursive_prompt
             assert "multiple independent branches" in recursive_prompt
             assert "Do not delegate the current task unchanged" in recursive_prompt
+            assert "current research and delegation strategy" in recursive_prompt
             assert "launch_subagent" in recursive_prompt
+            assert "asyncio.gather(...)" in recursive_prompt
             assert "DELEGATION STRATEGY:" not in single_prompt
             assert "launch_subagent" not in single_prompt
+            assert "asyncio.gather" not in single_prompt
+            assert "subagent" not in single_prompt.lower()
+            assert "delegat" not in single_prompt.lower()
+            assert "You are a deep research agent solving a factual question by searching Wikipedia." in single_prompt
+            assert "You have access to Python plus Wikipedia search tools." in single_prompt
+            preserved_single_content = (
+                "Decompose the current goal according to its information dependencies.",
+                "Some questions cannot be fully decomposed before searching. Resolve prerequisites first",
+                "When the task depends on a set of unknown entities, first identify those entities",
+                "Refine later searches using information discovered from earlier searches.",
+                "Store retrieved Wikipedia page content in Python variables instead of directly outputting it.",
+                "Wikipedia pages may be long. Check or estimate the content length first; if it is large,",
+                "Use Python to search, slice, or extract only the relevant portions needed for the current question.",
+                "Base factual conclusions on retrieved page content.",
+                "Aggregate the required intermediate results before answering the original goal.",
+                "Use Python to organize intermediate findings and synthesize results.",
+                "Cross-check important or ambiguous facts when necessary.",
+                "When you have enough evidence to answer the complete current goal, call `finish(...)`.",
+                "Use the available tools according to the Action Space.",
+                "Keep large retrieved texts in Python variables and inspect only relevant snippets",
+                "For each step, first briefly describe your current research strategy in 1-3 sentences",
+            )
+            for content in preserved_single_content:
+                assert content in single_prompt
+            assert "Use the available tools according to the Action Space." in recursive_prompt
             assert "specific search terms" not in recursive_prompt
             assert "wiki_search(" not in recursive_prompt
             assert "wiki_content(" not in recursive_prompt
-            assert "Use the available tools according to the Action Space." in recursive_prompt
-            assert "You are a deep research agent" in single_prompt
-            assert "Python plus Wikipedia search tools." in single_prompt
-            assert "you can delegate subproblems to subagents" not in single_prompt
-            common_paragraphs = []
-            for index, paragraph in enumerate(recursive_prompt.split("\n\n")):
-                if index == 0:
-                    paragraph = paragraph.replace(", and you can delegate subproblems to subagents", "")
-                if "launch_subagent" not in paragraph.lower() and "subagent" not in paragraph.lower():
-                    common_paragraphs.append(paragraph)
-            assert single_prompt == "\n\n".join(common_paragraphs)
 
             root_agent = FanOutQARecursiveAgent(
                 prompt_builder=root_builder,

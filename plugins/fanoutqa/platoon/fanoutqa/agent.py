@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from platoon.agents.codeact import CodeActAgent
@@ -11,6 +12,38 @@ from platoon.envs.base import Task
 from platoon.utils.llm_client import LLMClient
 
 _RECURSIVE_PROMPT = Path(__file__).parent / "prompts" / "fanoutqa_recursive.md"
+
+
+def _remove_delegation_prompt(prompt: str) -> str:
+    """Keep the recursive research prompt intact except for delegation instructions."""
+    prompt = re.sub(
+        r"(?ms)^DELEGATION STRATEGY:[ \t]*\n.*?(?=^[A-Z][A-Z _-]*:[ \t]*$|\Z)",
+        "",
+        prompt,
+    )
+    prompt = re.sub(
+        r",\s*and you can delegate subproblems to subagents\b",
+        "",
+        prompt,
+        flags=re.IGNORECASE,
+    )
+    prompt = re.sub(
+        r"\bresearch (?:or|and) delegation strategy\b",
+        "research strategy",
+        prompt,
+        flags=re.IGNORECASE,
+    )
+    lines = [
+        line
+        for line in prompt.splitlines()
+        if not re.search(
+            r"\b(?:launch_subagent|subagents?|delegat\w*)\b",
+            line,
+            flags=re.IGNORECASE,
+        )
+    ]
+    prompt = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+    return f"{prompt}\n" if prompt else ""
 
 
 def _read_prompt(prompt_path: str | Path | None, recursive: bool) -> str:
@@ -23,17 +56,7 @@ def _read_prompt(prompt_path: str | Path | None, recursive: bool) -> str:
         if not path.is_file():
             raise FileNotFoundError(f"FanOutQA prompt file not found: {prompt_path}")
     prompt = path.read_text(encoding="utf-8")
-    if recursive:
-        return prompt
-    # Single-agent prompts keep the exact common paragraphs while dropping any
-    # recursion instructions, including when configs pass the recursive file.
-    paragraphs = prompt.split("\n\n")
-    paragraphs[0] = paragraphs[0].replace(", and you can delegate subproblems to subagents", "")
-    return "\n\n".join(
-        paragraph
-        for paragraph in paragraphs
-        if "launch_subagent" not in paragraph.lower() and "subagent" not in paragraph.lower()
-    )
+    return prompt if recursive else _remove_delegation_prompt(prompt)
 
 
 class FanOutQAPromptBuilder(CodeActPromptBuilder):
