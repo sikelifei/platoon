@@ -1,0 +1,34 @@
+inference:
+  model_name: openai/Qwen3-4B-Instruct-2507
+  model_endpoint: http://192.168.1.134:8010/v1
+  model_api_key: EMPTY
+  output_dir: ./results/fanoutqa/qwen_single
+  resume: true
+  workflow:
+    num_rollouts_per_task: 1
+    num_concurrent_workers: 4
+    rollout_config:
+      max_steps: 30
+      verbose: false
+      timeout: 1200
+      step_timeout: 300
+      inference_params:
+        temperature: 0.0
+        top_p: 1.0
+        max_completion_tokens: 1024
+
+dataset_split: dev
+prompt_path: null
+num_tasks: 20
+use_recursive_agent: false
+shuffle_tasks: false
+seed: 42
+recursive:
+  enabled: false
+  max_depth: 4
+  subagent_max_steps: 15
+
+wikipedia:
+  type: kiwix
+  kiwix_base: http://127.0.0.1:8889
+  kiwix_zimname: wikipedia_en_all_nopic_2023-09
